@@ -51,14 +51,18 @@
     if (window.dataOk) {
         var ctx = document.getElementById('levels').getContext('2d');
         window.chart = new Chart(ctx, config);
+        const intervalMs = 100;
+        const maxAnimationTime = 5000;
+
         var intervalId = setInterval(function () {
             if (window.model && window.currentTime < window.maxTime) {
-                let levels = window.model.calculate(window.currentTime);
-                window.chart.data.datasets[0].data = levels;
+                window.chart.data.datasets[0].data = window.model.calculate(window.currentTime);
                 window.chart.update();
-                window.currentTime += 0.5;
+                window.currentTime += window.maxTime / (maxAnimationTime / intervalMs);
+            } else {
+                clearInterval(intervalId);
             }
-        }, 50);
+        }, intervalMs);
     }
 </script>
 </body>
