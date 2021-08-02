@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "crates/lib",
+    "crates/cli",
+    "waterlevels",
+]
+
+[profile.release]
+lto = true

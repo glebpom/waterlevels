@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Waterlevels</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1 id="config"></h1>
+<script type="application/javascript">
+    window.levels = prompt("Enter levels (floats separated by ,)").split(',').map(val => parseFloat(val));
+    window.maxTime = parseFloat(prompt("Enter Max Time (float)"));
+
+    if (isNaN(window.maxTime) || window.levels.find(val => isNaN(val))) {
+        alert("bad data!");
+    } else {
+        window.dataOk = true;
+        document.getElementById("config").textContent = window.levels.toString();
+    }
+
+    window.currentTime = 0.0;
+</script>
+<script src="index.js"></script>
+<canvas id="levels"></canvas>
+<script>
+    const labels = window.levels;
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Water Level',
+            backgroundColor: [
+                'blue',
+            ],
+            data: window.levels
+        }]
+    };
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            animation: {
+                duration: 0
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        },
+    };
+    if (window.dataOk) {
+        var ctx = document.getElementById('levels').getContext('2d');
+        window.chart = new Chart(ctx, config);
+        var intervalId = setInterval(function () {
+            if (window.model && window.currentTime < window.maxTime) {
+                let levels = window.model.calculate(window.currentTime);
+                window.chart.data.datasets[0].data = levels;
+                window.chart.update();
+                window.currentTime += 0.5;
+            }
+        }, 50);
+    }
+</script>
+</body>
+</html>
