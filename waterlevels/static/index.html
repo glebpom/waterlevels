@@ -11,7 +11,7 @@
     window.levels = prompt("Enter levels (floats separated by ,)").split(',').map(val => parseFloat(val));
     window.maxTime = parseFloat(prompt("Enter Max Time (float)"));
 
-    if (isNaN(window.maxTime) || window.levels.find(val => isNaN(val))) {
+    if (isNaN(window.maxTime) || window.levels.some(val => isNaN(val))) {
         alert("bad data!");
     } else {
         window.dataOk = true;
