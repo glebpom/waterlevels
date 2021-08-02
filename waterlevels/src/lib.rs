@@ -1,11 +1,4 @@
-use core::cell::RefCell;
-use std::collections::HashMap;
-
-use lazy_static::lazy_static;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use core::cell::Cell;
-use std::rc::Rc;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]

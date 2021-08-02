@@ -443,6 +443,7 @@ dependencies = [
  "console_error_panic_hook",
  "futures",
  "js-sys",
+ "lazy_static",
  "snapview-test-lib",
  "wasm-bindgen",
  "wasm-bindgen-futures",
