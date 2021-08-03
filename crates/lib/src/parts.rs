@@ -217,7 +217,7 @@ impl Parts {
                 assert_eq!(was_part.merged_indices.end, part_to_join_to.start);
                 part_to_join_to.start = was_part.merged_indices.start;
             } else {
-                unreachable!()
+                unreachable!("expected a change but no change may occur");
             }
         }
 

@@ -41,7 +41,7 @@ impl Model {
                 None => {
                     // final part
                     self.generations.push((
-                        (last_generation.1, self.max_time),
+                        (last_generation.1,f64::MAX),
                         last_generation.0,
                     ));
 
@@ -77,7 +77,7 @@ impl Model {
             bail!("time should not be negative");
         }
 
-        if time >= self.max_time {
+        if time > self.max_time {
             bail!("more then max time time provided");
         }
 

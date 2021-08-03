@@ -7,6 +7,7 @@
 </head>
 <body>
 <h1 id="config"></h1>
+<h1 id="time"></h1>
 <script type="application/javascript">
     window.levels = prompt("Enter levels (floats separated by ,)").split(',').map(val => parseFloat(val));
     window.maxTime = parseFloat(prompt("Enter Max Time (float)"));
@@ -15,7 +16,7 @@
         alert("bad data!");
     } else {
         window.dataOk = true;
-        document.getElementById("config").textContent = window.levels.toString();
+        document.getElementById("config").textContent = "Heights: " + window.levels.toString();
     }
 
     window.currentTime = 0.0;
@@ -23,6 +24,19 @@
 <script src="index.js"></script>
 <canvas id="levels"></canvas>
 <script>
+    const intervalMs = 100;
+    const maxAnimationTime = 5000;
+
+    function setTime() {
+        window.chart.data.datasets[0].data = window.model.calculate(window.currentTime);
+        window.chart.update();
+        document.getElementById("time").textContent = "Time: " + window.currentTime
+        window.currentTime += window.maxTime / (maxAnimationTime / intervalMs);
+        if (window.currentTime > window.maxTime) {
+            window.currentTime = window.maxTime;
+        }
+    }
+
     const labels = window.levels;
     const data = {
         labels: labels,
@@ -51,14 +65,10 @@
     if (window.dataOk) {
         var ctx = document.getElementById('levels').getContext('2d');
         window.chart = new Chart(ctx, config);
-        const intervalMs = 100;
-        const maxAnimationTime = 5000;
 
         var intervalId = setInterval(function () {
-            if (window.model && window.currentTime < window.maxTime) {
-                window.chart.data.datasets[0].data = window.model.calculate(window.currentTime);
-                window.chart.update();
-                window.currentTime += window.maxTime / (maxAnimationTime / intervalMs);
+            if (window.model && window.currentTime <= window.maxTime) {
+                setTime();
             } else {
                 clearInterval(intervalId);
             }
