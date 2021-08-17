@@ -23,7 +23,7 @@ struct App {
 impl App {
     fn new() -> App {
         // let v = (0..20).map(|_| thread_rng().gen_range(0.0..20.0f64)).collect::<Vec<f64>>();
-        let v = [0.0, 20.0, 20.0, 10.0, 20.0];
+        let v = [8.0, 1.0, 8.0, 1.0];
         let mut app = App {
             time: 0.0,
             model: Model::new(&v, 30.0).unwrap(),

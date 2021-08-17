@@ -67,10 +67,12 @@
         window.chart = new Chart(ctx, config);
 
         var intervalId = setInterval(function () {
-            if (window.model && window.currentTime <= window.maxTime) {
-                setTime();
-            } else {
-                clearInterval(intervalId);
+            if (window.model) {
+                if (window.currentTime <= window.maxTime) {
+                    setTime();
+                } else {
+                    clearInterval(intervalId);
+                }
             }
         }, intervalMs);
     }
