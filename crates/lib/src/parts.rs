@@ -26,7 +26,7 @@ impl Part {
 #[derive(Debug, Clone)]
 pub(crate) struct Parts {
     inner: Vec<Part>,
-    velocities: Vec<f64>,
+    velocities: Vec<(f64, usize)>,
     next_change: Option<(Vec<(Index, Height)>, f64)>,
 }
 
@@ -79,25 +79,31 @@ fn is_accept_water(parts: &[Part], idx: usize) -> bool {
         (idx == parts.len() - 1 || parts[idx + 1].height > parts[idx].height)
 }
 
-fn calculate_filling_velocity(parts: &[Part]) -> Vec<f64> {
-    let mut velocities = vec![0.0; parts.len()];
+fn calculate_filling_velocity(parts: &[Part]) -> Vec<(f64, usize)> {
+    let mut velocities = vec![(0.0, 1); parts.len()];
     for (idx, Part { merged_indices: range, .. }) in parts.iter().enumerate() {
+        velocities[idx].1 = range.len();
         if is_accept_water(parts, idx) {
-            velocities[idx] += range.len() as f64;
+            velocities[idx].0 += range.len() as f64;
         } else {
             let maybe_right = find_destination(parts, idx, Direction::Right);
             let maybe_left = find_destination(parts, idx, Direction::Left);
 
             match (maybe_left, maybe_right) {
                 (Some(left), Some(right)) => {
-                    velocities[left] += range.len() as f64 / 2.0;
-                    velocities[right] += range.len() as f64 / 2.0;
+                    velocities[left].0 += range.len() as f64 / 2.0;
+                    velocities[left].1 = parts[left].merged_indices.len();
+
+                    velocities[right].0 += range.len() as f64 / 2.0;
+                    velocities[right].1 = parts[right].merged_indices.len();
                 }
                 (Some(left), None) => {
-                    velocities[left] += range.len() as f64;
+                    velocities[left].0 += range.len() as f64;
+                    velocities[left].1 = parts[left].merged_indices.len();
                 }
                 (None, Some(right)) => {
-                    velocities[right] += range.len() as f64;
+                    velocities[right].0 += range.len() as f64;
+                    velocities[right].1 = parts[right].merged_indices.len();
                 }
                 (None, None) => {}
             }
@@ -115,10 +121,11 @@ fn calculate_filling_velocity(parts: &[Part]) -> Vec<f64> {
 ///
 /// Index is as stored in parts slice
 ///
-fn calculate_next_configuration_change(parts: &[Part], velocities: &[f64]) -> Option<(Vec<(Index, Height)>, f64)> {
+fn calculate_next_configuration_change(parts: &[Part], velocities: &[(f64, usize)]) -> Option<(Vec<(Index, Height)>, f64)> {
     let mut min_time_to_reach_nearest: Option<(Vec<(Index, Height)>, f64)> = None;
-    for (idx, velocity) in velocities.iter().enumerate() {
-        if *velocity > 0.0 {
+    for (idx, (merged_velocity, num_parts)) in velocities.iter().enumerate() {
+        let velocity  = *merged_velocity / *num_parts as f64;
+        if velocity > 0.0 {
             let left_diff = if idx > 0 && parts[idx].height < parts[idx - 1].height {
                 Some(parts[idx - 1].height - parts[idx].height)
             } else {
@@ -257,8 +264,8 @@ impl Parts {
     pub(crate) fn calculate_parts_at_rel_time(&self, time: f64) -> Vec<Part> {
         let mut new_parts = self.inner.clone();
 
-        for (new_part, velocity) in new_parts.iter_mut().zip(self.velocities.iter()) {
-            new_part.height += velocity * time;
+        for (new_part, (velocity, num_parts)) in new_parts.iter_mut().zip(self.velocities.iter()) {
+            new_part.height += velocity * time / *num_parts as f64;
         }
 
         new_parts
@@ -306,7 +313,7 @@ mod tests {
         assert!(!is_accept_water(parts.as_ref(), 5));
 
         let velocities = calculate_filling_velocity(parts.as_ref());
-        assert_eq!(velocities, vec![0.0, 2.5, 0.0, 3.5, 0.0, 0.0]);
+        assert_eq!(velocities, vec![(0.0, 1), (2.5, 1), (0.0, 1), (3.5, 1), (0.0, 1), (0.0, 1)]);
 
         let (next_configuration_changes, time_before_change) = calculate_next_configuration_change(parts.as_ref(), &velocities)
             .unwrap();
@@ -366,11 +373,12 @@ mod tests {
         ]);
 
         let velocities = calculate_filling_velocity(next_parts.as_ref());
+
         let (next_configuration_changes, time_before_change) = calculate_next_configuration_change(next_parts.as_ref(), &velocities)
             .unwrap();
 
         assert_eq!(next_configuration_changes, vec![(0, 6.0)]);
-        assert_abs_diff_eq!(time_before_change, 3.0f64 / 6.0f64);
+        assert_abs_diff_eq!(time_before_change, 3.0f64 / 3.0f64);
 
         let next_parts = Parts::new_from_parts_and_changes(next_parts.as_ref(), &next_configuration_changes).unwrap();
         assert_eq!(next_parts.as_ref(), vec![
@@ -389,11 +397,12 @@ mod tests {
         ]);
 
         let velocities = calculate_filling_velocity(next_parts.as_ref());
+
         let (next_configuration_changes, time_before_change) = calculate_next_configuration_change(next_parts.as_ref(), &velocities)
             .unwrap();
 
         assert_eq!(next_configuration_changes, vec![(0, 8.0)]);
-        assert_abs_diff_eq!(time_before_change, 2.0f64 / 6.0f64);
+        assert_abs_diff_eq!(time_before_change, 1.0f64 / 3.0f64 * 4.0f64);
 
         let next_parts = Parts::new_from_parts_and_changes(next_parts.as_ref(), &next_configuration_changes).unwrap();
         assert_eq!(next_parts.as_ref(), vec![
@@ -408,11 +417,12 @@ mod tests {
         ]);
 
         let velocities = calculate_filling_velocity(next_parts.as_ref());
+
         let (next_configuration_changes, time_before_change) = calculate_next_configuration_change(next_parts.as_ref(), &velocities)
             .unwrap();
 
         assert_eq!(next_configuration_changes, vec![(0, 9.0)]);
-        assert_abs_diff_eq!(time_before_change, 1.0f64 / 6.0f64);
+        assert_abs_diff_eq!(time_before_change, 1.0f64 / 6.0f64 * 5.0);
 
         let next_parts = Parts::new_from_parts_and_changes(next_parts.as_ref(), &next_configuration_changes).unwrap();
         assert_eq!(next_parts.as_ref(), vec![
@@ -434,13 +444,13 @@ mod tests {
         assert_eq!(find_destination(parts.as_ref(), 3, Direction::Left).unwrap(), 1);
 
         let velocities = calculate_filling_velocity(parts.as_ref());
-        assert_eq!(velocities, vec![0.0, 6.0, 0.0, 0.0]);
+        assert_eq!(velocities, vec![(0.0, 1), (6.0, 2), (0.0, 2), (0.0, 1)]);
 
-        let (next_configuration_change_idx, time_before_change) = calculate_next_configuration_change(parts.as_ref(), &velocities)
+        let (next_configuration_change_indices, time_before_change) = calculate_next_configuration_change(parts.as_ref(), &velocities)
             .unwrap();
 
-        assert_eq!(next_configuration_change_idx, vec![(1, 2.0)]);
-        assert_abs_diff_eq!(time_before_change, 2.0f64 / 6.0f64 / 2.0f64);
+        assert_eq!(next_configuration_change_indices, vec![(1, 2.0)]);
+        assert_abs_diff_eq!(time_before_change, 2.0f64 / 6.0f64);
     }
 
     #[test]
@@ -448,7 +458,7 @@ mod tests {
         let parts = Parts::new(&[3.0, 2.0, 4.0, 3.0, 4.0]).unwrap();
 
         let velocities = calculate_filling_velocity(parts.as_ref());
-        assert_eq!(velocities, vec![0.0, 2.5, 0.0, 2.5, 0.0]);
+        assert_eq!(velocities, vec![(0.0, 1), (2.5, 1), (0.0, 1), (2.5, 1), (0.0, 1)]);
 
         let (next_configuration_change_idx, _time_before_change) = calculate_next_configuration_change(parts.as_ref(), &velocities)
             .unwrap();
@@ -463,10 +473,18 @@ mod tests {
 
 
         let velocities = calculate_filling_velocity(parts.as_ref());
-        assert_eq!(velocities, vec![1.0]);
+        assert_eq!(velocities, vec![(1.0, 1)]);
 
         assert!(calculate_next_configuration_change(parts.as_ref(), &velocities)
             .is_none());
+    }
+
+    #[test]
+    fn test_multiple_elements() {
+        let parts = Parts::new(&[1.0, 1.0, 3.0]).unwrap();
+        let velocities = calculate_filling_velocity(parts.as_ref());
+
+        assert_eq!(velocities, vec![(3.0, 2), (0.0, 1)]);
     }
 
     #[test]

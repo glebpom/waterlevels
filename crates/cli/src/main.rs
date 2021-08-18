@@ -1,5 +1,6 @@
 use std::{error::Error, io};
 
+use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
@@ -8,9 +9,9 @@ use tui::{
     widgets::{BarChart, Block, Borders},
 };
 
-use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use snapview_test_lib::Model;
+
 use crate::util::event::{Event, Events};
-use snapview_test_lib::{Model};
 
 mod util;
 
@@ -23,11 +24,11 @@ struct App {
 impl App {
     fn new() -> App {
         // let v = (0..20).map(|_| thread_rng().gen_range(0.0..20.0f64)).collect::<Vec<f64>>();
-        let v = [8.0, 1.0, 8.0, 1.0];
+        let v = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
         let mut app = App {
             time: 0.0,
-            model: Model::new(&v, 30.0).unwrap(),
-            current: vec![]
+            model: Model::new(&v, 1.0).unwrap(),
+            current: vec![],
         };
 
         app.update();
@@ -37,7 +38,7 @@ impl App {
 
     fn update(&mut self) {
         if self.time >= 30.0 {
-            return
+            return;
         }
         self.current = self.model.calculate_levels(self.time).unwrap()
             .into_iter()
