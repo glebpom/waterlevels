@@ -78,9 +78,8 @@ impl Model {
         }
 
         if time > self.max_time {
-            bail!("more then max time time provided");
+            bail!("more then max time provided");
         }
-
 
         let idx = self.generations.binary_search_by(|((probe_left, probe_right), _probe)| {
             if time < *probe_left {
