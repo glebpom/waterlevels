@@ -110,6 +110,7 @@ impl Model {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn test_basic() {
@@ -123,5 +124,14 @@ mod tests {
     #[test]
     fn test_duplicates_after_merge_collapsing() {
         Model::new(&[0.0, 2.0, 2.0, 1.0, 2.0], 20.0).unwrap();
+    }
+
+    #[test]
+    fn test_sequential_elements() {
+        let model = Model::new(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], 5.0).unwrap();
+        let r = model.calculate_levels(5.0).unwrap();
+        for item in r {
+            assert_abs_diff_eq!(item, 9.0);
+        }
     }
 }
